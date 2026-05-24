@@ -794,11 +794,12 @@ PAL_InterpretInstruction(
             // replace them directly, instead of removing items 
             // and adding them at the end of the item menu
             //
-            gpGlobals->rgInventory[i].wItem = w;
-         }
-         else
-         {
-            PAL_AddItemToInventory(pScript->rgwOperand[1], -1);
+             gpGlobals->rgInventory[i].wItem = w;
+             PAL_SortInventory();
+          }
+          else
+          {
+             PAL_AddItemToInventory(pScript->rgwOperand[1], -1);
 
             if (w != 0)
             {

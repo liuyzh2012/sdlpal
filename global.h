@@ -630,6 +630,11 @@ PAL_CompressInventory(
 );
 
 VOID
+PAL_SortInventory(
+   VOID
+);
+
+VOID
 PAL_RemoveEquipmentEffect(
    WORD         wPlayerRole,
    WORD         wEquipPart

@@ -633,7 +633,7 @@ PAL_LoadGame_Common(
 
 	gpGlobals->fEnteringScene = FALSE;
 
-	PAL_CompressInventory();
+	PAL_SortInventory();
 
 	return TRUE;
 }
@@ -1136,6 +1136,8 @@ PAL_AddItemToInventory(
             iNum = 99;
          }
          gpGlobals->rgInventory[index].nAmount = iNum;
+
+         PAL_SortInventory();
       }
 
       return TRUE;
@@ -1206,6 +1208,113 @@ PAL_GetItemAmount(
    }
 
    return 0;
+}
+
+static int
+PAL_InventoryItemCategory(
+   WORD          wFlags
+)
+/*++
+  Purpose:
+
+    Determine the sort category of an item based on its flags.
+
+  Parameters:
+
+    [IN]  wFlags - item flags from OBJECT_ITEM.wFlags.
+
+  Return value:
+
+    Category number, lower = higher priority in sorting.
+
+--*/
+{
+   if (wFlags & kItemFlagEquipable)
+      return 0;
+   if (wFlags & kItemFlagUsable)
+      return 1;
+   if (wFlags & kItemFlagThrowable)
+      return 2;
+   return 3;
+}
+
+static int
+PAL_InventoryCompareFunc(
+   const void   *a,
+   const void   *b
+)
+/*++
+  Purpose:
+
+    Compare two inventory entries for qsort.
+    Sort order: category (equipment > consumable > throwable > special),
+    then by price descending, then by item ID ascending.
+
+  Parameters:
+
+    [IN]  a, b - pointers to INVENTORY entries.
+
+  Return value:
+
+    Negative if a sorts before b, positive if a sorts after b, 0 if equal.
+
+--*/
+{
+   const INVENTORY *pA = (const INVENTORY *)a;
+   const INVENTORY *pB = (const INVENTORY *)b;
+   WORD            wItemA = pA->wItem;
+   WORD            wItemB = pB->wItem;
+   WORD            wFlagsA = gpGlobals->g.rgObject[wItemA].item.wFlags;
+   WORD            wFlagsB = gpGlobals->g.rgObject[wItemB].item.wFlags;
+   WORD            wPriceA = gpGlobals->g.rgObject[wItemA].item.wPrice;
+   WORD            wPriceB = gpGlobals->g.rgObject[wItemB].item.wPrice;
+
+   int catA = PAL_InventoryItemCategory(wFlagsA);
+   int catB = PAL_InventoryItemCategory(wFlagsB);
+
+   if (catA != catB)
+      return catA - catB;
+
+   if (wPriceA != wPriceB)
+      return (int)wPriceB - (int)wPriceA;
+
+   return (int)wItemA - (int)wItemB;
+}
+
+VOID
+PAL_SortInventory(
+   VOID
+)
+/*++
+  Purpose:
+
+    Compress the inventory array and sort remaining items by category and price.
+    Only called when inventory content changes (add item, load save, equip swap).
+
+  Parameters:
+
+    None.
+
+  Return value:
+
+    None.
+
+--*/
+{
+   int n;
+
+   PAL_CompressInventory();
+
+   n = 0;
+   while (n < MAX_INVENTORY && gpGlobals->rgInventory[n].wItem != 0)
+   {
+      n++;
+   }
+
+   if (n > 1)
+   {
+      qsort(gpGlobals->rgInventory, n, sizeof(INVENTORY), PAL_InventoryCompareFunc);
+   }
 }
 
 VOID
