@@ -411,8 +411,8 @@ PAL_LoadDefaultGame(
    else
    {
       OBJECT_DOS objects[MAX_OBJECTS];
-	  PAL_MKFReadChunk((LPBYTE)(objects), sizeof(objects), 2, gpGlobals->f.fpSSS);
-	  DO_BYTESWAP(objects, sizeof(objects));
+      PAL_MKFReadChunk((LPBYTE)(objects), sizeof(objects), 2, gpGlobals->f.fpSSS);
+      DO_BYTESWAP(objects, sizeof(objects));
       //
       // Convert the DOS-style data structure to WIN-style data structure
       //
@@ -633,7 +633,7 @@ PAL_LoadGame_Common(
 
 	gpGlobals->fEnteringScene = FALSE;
 
-	PAL_SortInventory();
+	PAL_CompressInventory();
 
 	return TRUE;
 }
@@ -675,6 +675,9 @@ PAL_LoadGame_DOS(
       gpGlobals->g.rgObject[i].rgwData[6] = s->rgObject[i].rgwData[5];     // wFlags
       gpGlobals->g.rgObject[i].rgwData[5] = 0;                            // wScriptDesc or wReserved2
    }
+
+   PAL_SortInventory();
+
    memcpy(gpGlobals->g.lprgEventObject, s->rgEventObject, sizeof(EVENTOBJECT) * gpGlobals->g.nEventObject);
 
    free(s);
@@ -713,6 +716,9 @@ PAL_LoadGame_WIN(
 	   return -1;
 
    memcpy(gpGlobals->g.rgObject, s->rgObject, sizeof(gpGlobals->g.rgObject));
+
+   PAL_SortInventory();
+
    memcpy(gpGlobals->g.lprgEventObject, s->rgEventObject, sizeof(EVENTOBJECT) * gpGlobals->g.nEventObject);
     
    free(s);
